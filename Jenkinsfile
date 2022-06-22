@@ -11,7 +11,7 @@ pipeline {
         stage('Lint all app code') {
             steps {
                 sh 'echo "STAGE 1: Checking app code for syntax error ..."'
-                sh 'tidy -q -e *.html'
+                
             }
         }   
         stage( 'Build docker image for app' ) {
@@ -26,18 +26,18 @@ pipeline {
                 withDockerRegistry([url: "", credentialsId: "dockerhub"]) {
                     sh 'echo "STAGE 3: Uploading image to dockerhub repository ..."'
                     sh 'docker login'
-                    sh 'docker tag web-app:v1.0 nigercode/web-app:v1.0'
-                    sh 'docker push nigercode/web-app:v1.0'          
+                    sh 'docker tag web-app:v1.0 anitha7797/web-app:v1.0'
+                    sh 'docker push anitha7797/web-app:v1.0'          
                 }
             }
         }                                   
         stage( 'Deploy image to AWS EKS' ) {
             steps {
-                withAWS( region:'us-west-2', credentials:'capstone' ) {
+                withAWS( region:'us-east-1', credentials:'k8s' ) {
                     sh 'echo "STAGE 4: Deploying image to AWS EKS cluster ..."'
-                    sh 'aws eks --region us-west-2 update-kubeconfig --name capstone'
-                    sh 'kubectl config use-context arn:aws:eks:us-west-2:428819381342:cluster/capstone'            
-                    sh 'kubectl set image deployment web-app web-app=nigercode/web-app:v1.0'
+                    sh 'aws eks update-kubeconfig --name dev --region us-east-1'
+                    sh 'kubectl config use-context arn:aws:eks:us-east-1:044804851099:cluster/dev'
+                    sh 'kubectl set image deployment web-app web-app=anitha7797/web-app:v1.0'
                     sh 'kubectl rollout status deployment web-app'
                     sh 'kubectl apply -f templates/deployment.yml'
                     sh 'kubectl apply -f templates/loadbalancer.yml'
